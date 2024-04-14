@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::io::Read;
-
-use alloy_primitives::U256;
-use alloy_sol_types::SolValue;
+use k256::{
+    ecdsa::{signature::Verifier, Signature, VerifyingKey},
+    EncodedPoint,
+};
 use risc0_zkvm::guest::env;
 
 fn main() {
-    // Read the input data for this application.
-    let mut input_bytes = Vec::<u8>::new();
-    env::stdin().read_to_end(&mut input_bytes).unwrap();
-    // Decode and parse the input
-    let number = <U256>::abi_decode(&input_bytes, true).unwrap();
+    // Decode the verifying key, message, and signature from the inputs.
+    let (encoded_verifying_key, message, signature): (EncodedPoint, Vec<u8>, Signature) =
+        env::read();
+    let verifying_key = VerifyingKey::from_encoded_point(&encoded_verifying_key).unwrap();
 
-    // Run the computation.
-    // In this case, asserting that the provided number is even.
-    assert!(!number.bit(0), "number is not even");
+    // Verify the signature, panicking if verification fails.
+    verifying_key
+        .verify(&message, &signature)
+        .expect("ECDSA signature verification failed");
 
-    // Commit the journal that will be received by the application contract.
-    // Journal is encoded using Solidity ABI for easy decoding in the app contract.
-    env::commit_slice(number.abi_encode().as_slice());
+    // Commit to the journal the verifying key and message that was signed.
+    env::commit(&(encoded_verifying_key, message));
 }

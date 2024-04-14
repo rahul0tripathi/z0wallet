@@ -7,12 +7,21 @@ edition = "2021"
 name = "is-even"
 path = "src/bin/is_even.rs"
 
-[workspace]
+[profile.release]
+codegen-units = 1
+lto = "thin"
 
 [dependencies]
+risc0-zkvm = {  version = "0.21", default-features = false, features = ['std'] }
+hex-literal = "0.4"
+k256 = { version = "=0.13.1", features = ["arithmetic", "serde", "expose-field", "std", "ecdsa"], default_features = false }
 alloy-primitives = { version = "0.6", default-features = false, features = ["rlp", "serde", "std"] }
 alloy-sol-types = { version = "0.6" }
-risc0-zkvm = {  version = "0.21", default-features = false, features = ['std'] }
 
-[profile.release]
-lto = "thin"
+[patch.crates-io]
+# Placing these patch statement in the workspace Cargo.toml will add RISC Zero SHA-256 and bigint
+# multiplication accelerator support for all downstream usages of the following crates.
+sha2 = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.6-risczero.0" }
+k256 = { git = "https://github.com/risc0/RustCrypto-elliptic-curves", tag = "k256/v0.13.1-risczero.1"  }
+crypto-bigint = { git = "https://github.com/risc0/RustCrypto-crypto-bigint", tag = "v0.5.2-risczero.0" }
+
