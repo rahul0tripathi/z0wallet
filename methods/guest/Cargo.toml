@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "is-even"
-path = "src/bin/is_even.rs"
+name = "z0_generator"
+path = "src/bin/z0_generator.rs"
 
 [profile.release]
 codegen-units = 1
