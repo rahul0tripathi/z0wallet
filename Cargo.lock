@@ -1854,6 +1854,7 @@ dependencies = [
  "alloy-sol-types",
  "bumpalo",
  "cargo-platform",
+ "ethereum-hexutil",
  "ethers-core",
  "ethers-signers",
  "hex-literal",
