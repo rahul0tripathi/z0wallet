@@ -36,8 +36,8 @@ contract EvenNumberTest is RiscZeroCheats, Test {
 //        uint256 number = 12345678;
 //        (bytes memory journal, bytes32 post_state_digest, bytes memory seal) =
 //            prove(Elf.IS_EVEN_PATH, abi.encode(number));
-        bytes32 post_state_digest = hex"48278393c24c206d6c25dc0286aa99cef88d2a6fc86b73bbb85b16c3b40360bf";
-        bytes memory seal = hex"086f2f61d09b838b92c01f4d7e07dbfaed894aadcf2c39e6f3b9a1844018787b00988ca92f914d6da0e0bbf2668c421627e964ac2706321f023d74361d6589d5060bffa6acc5e2d367f2a14c4da3d7f8d632e655b47a75174fc787f8d90df42f0eb75a1ab41451cea8bd1ec9755a837301bbac1c41b6b3ed81656b8dfce620d70ea42830f494e1ac5010d8a580f1a594a7f65b424ffe5e713a8c8ae23edcdbf8228f560355e05f3b7596823743b557cd002af7bf73ad29fa53735685c92a54c110264182588c142581a45da7464f086b4cefc6b50c6417a4f5af3b0b794f41da0a13d4b7dcea0385183152690c0a7b425aef668c0f1fe783851f05fb52d2ad52";
+        bytes32 post_state_digest = hex"4ae562fbfb2a05e7277fdd4dc89c596af59667b3cc9b8a13869564521f2e73be";
+        bytes memory seal = hex"1d200dd66d0db5494b4a670d18e45ca8ba6e128a1147290e8512b4e6de2b1678171e8dc31518e7a98a54b406bb4036a0305be7e4833797b21cfb6b1ebad059430b2fd8325ed5f6a83aaa9093fe593033d130ce7f7eb715debf10be6ca657a6780a9dd432a7fcdb3abaeb779aa08caabd2c807115f2ade89ea30b4495e816d7131360b4b8152699d157f11ab11e784d07255252a7b58a413bcd88a6a07c1140e71d2febbb1614233c7d81c40cd9c5a6e7740686dee6557f9a8b14fea439a9d95502b87a7ac54756875db41f44d31f1bf4bda466c3fb1bc7499dea394167bdb9480f9e81b8e26b3a6d9732c0ab0d4df1d7c1076d947934adae38f1a3f7520e177f";
 
         evenNumber.validate( post_state_digest, seal);
         //assertEq(evenNumber.get(), number);
