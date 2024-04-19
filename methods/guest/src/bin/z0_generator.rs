@@ -51,38 +51,36 @@ fn generate_output(req:Z0Req) -> Result<[u8; 32],Z0ValidationError>{
         return U256::from_str(x.encode_hex().as_str()).unwrap().cmp(&U256::from_str(x1.encode_hex().as_str()).unwrap());
     });
 
-    let mut total: Vec<u8> =Vec::new();
+    let mut multi_sig_state: Vec<u8> =Vec::new();
 
     for (_, val) in signers.iter().enumerate() {
-        total.extend_from_slice(val.as_bytes());
-    }
-
-    let mut total: Vec<u8> =Vec::new();
-
-    for (_, val) in signers.iter().enumerate() {
-        total.extend_from_slice(val.as_bytes());
+        multi_sig_state.extend_from_slice(val.as_bytes());
     }
 
     let threshold = U256::from_str(req.threshold.as_str()).unwrap();
-    total.extend_from_slice(&*threshold.encode());
+    multi_sig_state.extend_from_slice(&*threshold.encode());
 
-    let signers_checksum = keccak256(&total);
+    // compute multi sig state root of the wallet from given signers
+    let multi_sig_state_root = keccak256(&multi_sig_state);
 
-    let mut state_root: Vec<u8> =Vec::new();
+    let mut wallet_state: Vec<u8> =Vec::new();
 
-    state_root.extend_from_slice(signers_checksum.as_slice());
+    wallet_state.extend_from_slice(multi_sig_state_root.as_slice());
 
+    // add nonce to wallet state root
     let nonce = U256::from_str(req.nonce.as_str()).unwrap();
-    state_root.extend_from_slice(&*nonce.encode());
+    wallet_state.extend_from_slice(&*nonce.encode());
 
-    let state_root_hash = keccak256(&state_root);
+    let state_root = keccak256(&wallet_state);
 
+    // check if threshold is met or not
     if  threshold.cmp(&U256::from(req.signatures.len())) == Ordering::Greater {
         return Err(Z0ValidationError::MissingSigners)
     }
 
     let message_hash = read_hex(req.message_hash.as_str()).unwrap();
 
+    // validate all the owners signatures
     for (_, sig) in req.signatures.iter().enumerate() {
         let pos = signers.iter().position(|x| *x == sig.eoa).unwrap();
         let signature = Signature::from_str(&*sig.signature).unwrap();
@@ -93,7 +91,7 @@ fn generate_output(req:Z0Req) -> Result<[u8; 32],Z0ValidationError>{
 
     let  mut result: Vec<u8> = Vec::new();
     result.extend_from_slice(message_hash.as_slice());
-    result.extend_from_slice(&state_root_hash[..]);
+    result.extend_from_slice(&state_root[..]);
 
     return Ok(keccak256(result));
 }

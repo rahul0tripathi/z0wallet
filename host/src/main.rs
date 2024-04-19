@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use methods::{IS_EVEN_ELF, IS_EVEN_ID};
+use methods::{Z0_GENERATOR_ELF, Z0_GENERATOR_ID};
 use k256::{
     ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
     EncodedPoint,
@@ -40,7 +40,7 @@ fn prove_ecdsa_verification(
     let prover = default_prover();
 
     // Produce a receipt by proving the specified ELF binary.
-    prover.prove(env, IS_EVEN_ELF).unwrap()
+    prover.prove(env, Z0_GENERATOR_ELF).unwrap()
 }
 
 fn main() {
@@ -53,7 +53,7 @@ fn main() {
     let receipt = prove_ecdsa_verification(signing_key.verifying_key(), message, &signature);
 
     // Verify the receipt and then access the journal.
-    receipt.verify(IS_EVEN_ID).unwrap();
+    receipt.verify(Z0_GENERATOR_ID).unwrap();
     let (receipt_verifying_key, receipt_message): (EncodedPoint, Vec<u8>) =
         receipt.journal.decode().unwrap();
 
