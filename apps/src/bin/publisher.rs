@@ -47,15 +47,17 @@ async fn gen_test_input()  -> Z0Req {
     let wallet: LocalWallet = "dcf2cbdd171a21c480aa7f53d77f31bb102282b3ff099c78e3118b37348c72f7"
         .parse::<LocalWallet>()
         .unwrap();
-    let signature = wallet.sign_message(message_hash.encode_hex()).await.unwrap();
-
+    let signature = wallet.sign_message(to_hex(message_hash.as_slice()).as_str()).await.unwrap();
+    let threshold = U256::from_str("1").unwrap().encode();
+    let nonce  = U256::from_str("0").unwrap().encode();
     return Z0Req{
         signers: vec![H160::from_str("0x63f9725f107358c9115bc9d86c72dd5823e9b1e6").unwrap() as Address, H160::from_str("0x687f4304Df62449dBc6C95FE9A8cb1153d40D42e").unwrap() as Address, H160::from_str("0x0f8361eF429B43fA48aC66A7cD8F619C517274f1").unwrap() as Address],
-        threshold: 1,
-        message_hash,
+        threshold: to_hex(threshold.as_slice()),
+        nonce: to_hex(nonce.as_slice()),
+        message_hash:to_hex(message_hash.as_slice()),
         signatures: vec![EOASignature{
             eoa: wallet.address(),
-            signature: signature.to_string(),
+            signature: to_hex(signature.to_vec().as_slice()),
         }],
     }
 }

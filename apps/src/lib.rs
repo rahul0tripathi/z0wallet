@@ -39,8 +39,9 @@ pub struct EOASignature {
 #[derive(Debug,Serialize)]
 pub struct Z0Req {
     pub signers: Vec<Address>,
-    pub threshold: u8,
-    pub message_hash: [u8; 32],
+    pub threshold: String,
+    pub nonce: String,
+    pub message_hash: String,
     pub signatures: Vec<EOASignature>
 }
 
