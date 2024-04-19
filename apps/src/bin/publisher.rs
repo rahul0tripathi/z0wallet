@@ -16,6 +16,8 @@
 // to the Bonsai proving service and publish the received proofs directly
 // to your deployed app contract.
 
+extern crate core;
+
 use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use apps::{BonsaiProver, EOASignature, Z0Req};
@@ -29,6 +31,7 @@ use ethers_core::types::Address;
 
 use ethers_signers::{LocalWallet, Signer, WalletError};
 use futures::executor::block_on;
+use hexutil::to_hex;
 use serde::{Deserialize, Serialize};
 
 // `IEvenNumber` interface automatically generated via the alloy `sol!` macro.
@@ -63,8 +66,10 @@ fn main() -> Result<()> {
     let input  = block_on(gen_test_input());
     // Send an off-chain proof request to the Bonsai proving service.
     let (journal, post_state_digest, seal) = BonsaiProver::prove(IS_EVEN_ELF, &input)?;
+    let digest = post_state_digest.as_slice();
 
-    println!("journal {} post state digest {} seal {}",journal.encode_hex(),post_state_digest.encode_hex(),seal.encode_hex());
+
+    println!("journal {} post state digest {} seal {}", to_hex(&*journal), to_hex(digest), to_hex(&*seal));
     // Decode the journal. Must match what was written in the guest with
     // `env::commit_slice`.
 
