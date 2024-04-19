@@ -29,16 +29,19 @@ import {Z0Wallet} from "../contracts/Z0Wallet.sol";
 ///
 /// See the Foundry documentation for more information about Solidity scripts.
 /// https://book.getfoundry.sh/tutorials/solidity-scripting
-contract EvenNumberDeploy is Script {
+contract Z0WalletDeploy is Script {
     function run() external {
         uint256 deployerKey = uint256(vm.envBytes32("ETH_WALLET_PRIVATE_KEY"));
-
+        bytes32 stateRoot = vm.envBytes32("STATE_ROOT");
         vm.startBroadcast(deployerKey);
 
-        IRiscZeroVerifier verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ID_0, ControlID.CONTROL_ID_1);
+        IRiscZeroVerifier verifier = new RiscZeroGroth16Verifier(
+            ControlID.CONTROL_ID_0,
+            ControlID.CONTROL_ID_1
+        );
         console2.log("Deployed RiscZeroGroth16Verifier to", address(verifier));
 
-        Z0Wallet wallet = new Z0Wallet(verifier);
+        Z0Wallet wallet = new Z0Wallet(verifier, stateRoot);
         console2.log("Deployed Z0Wallet to", address(wallet));
 
         vm.stopBroadcast();
