@@ -21,7 +21,7 @@ import {console2} from "forge-std/console2.sol";
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
 import {ControlID, RiscZeroGroth16Verifier} from "risc0/groth16/RiscZeroGroth16Verifier.sol";
 
-import {EvenNumber} from "../contracts/EvenNumber.sol";
+import {Z0Wallet} from "../contracts/Z0Wallet.sol";
 
 /// @notice Deployment script for the RISC Zero starter project.
 /// @dev Use the following environment variable to control the deployment:
@@ -38,8 +38,8 @@ contract EvenNumberDeploy is Script {
         IRiscZeroVerifier verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ID_0, ControlID.CONTROL_ID_1);
         console2.log("Deployed RiscZeroGroth16Verifier to", address(verifier));
 
-        EvenNumber evenNumber = new EvenNumber(verifier);
-        console2.log("Deployed EvenNumber to", address(evenNumber));
+        Z0Wallet wallet = new Z0Wallet(verifier);
+        console2.log("Deployed Z0Wallet to", address(wallet));
 
         vm.stopBroadcast();
     }
