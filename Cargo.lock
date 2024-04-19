@@ -184,16 +184,22 @@ dependencies = [
  "anyhow",
  "bincode",
  "bonsai-sdk",
+ "bumpalo",
  "bytemuck",
+ "cargo-platform",
  "clap",
  "env_logger",
  "ethers",
+ "ethers-core",
+ "ethers-signers",
+ "futures",
  "hex",
  "log",
  "methods",
  "risc0-ethereum-contracts",
  "risc0-zkvm",
  "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -629,9 +635,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.15.4"
+version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ff69b9dd49fd426c69a0db9fc04dd934cdb6645ff000864d98f7e2af8830eaa"
+checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
 
 [[package]]
 name = "byte-slice-cast"
@@ -1839,9 +1845,14 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
+ "bumpalo",
+ "cargo-platform",
+ "ethers-core",
+ "ethers-signers",
  "hex-literal",
- "k256",
  "risc0-zkvm",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
