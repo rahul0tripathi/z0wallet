@@ -28,46 +28,20 @@ use bonsai_sdk::alpha as bonsai_sdk;
 use ethers::prelude::*;
 use risc0_ethereum_contracts::groth16::Seal;
 use risc0_zkvm::{compute_image_id, Receipt};
+use serde::{Deserialize, Serialize};
 
-/// Wrapper of a `SignerMiddleware` client to send transactions to the given
-/// contract's `Address`.
-pub struct TxSender {
-    chain_id: u64,
-    client: SignerMiddleware<Provider<Http>, Wallet<k256::ecdsa::SigningKey>>,
-    contract: Address,
+#[derive(Debug,Serialize)]
+pub struct EOASignature {
+    pub eoa: Address,
+    pub signature: String
 }
 
-impl TxSender {
-    /// Creates a new `TxSender`.
-    pub fn new(chain_id: u64, rpc_url: &str, private_key: &str, contract: &str) -> Result<Self> {
-        let provider = Provider::<Http>::try_from(rpc_url)?;
-        let wallet: LocalWallet = private_key.parse::<LocalWallet>()?.with_chain_id(chain_id);
-        let client = SignerMiddleware::new(provider.clone(), wallet.clone());
-        let contract = contract.parse::<Address>()?;
-
-        Ok(TxSender {
-            chain_id,
-            client,
-            contract,
-        })
-    }
-
-    /// Send a transaction with the given calldata.
-    pub async fn send(&self, calldata: Vec<u8>) -> Result<Option<TransactionReceipt>> {
-        let tx = TransactionRequest::new()
-            .chain_id(self.chain_id)
-            .to(self.contract)
-            .from(self.client.address())
-            .data(calldata);
-
-        log::info!("Transaction request: {:?}", &tx);
-
-        let tx = self.client.send_transaction(tx, None).await?.await?;
-
-        log::info!("Transaction receipt: {:?}", &tx);
-
-        Ok(tx)
-    }
+#[derive(Debug,Serialize)]
+pub struct Z0Req {
+    pub signers: Vec<Address>,
+    pub threshold: u8,
+    pub message_hash: [u8; 32],
+    pub signatures: Vec<EOASignature>
 }
 
 /// An implementation of a Prover that runs on Bonsai.
@@ -75,25 +49,30 @@ pub struct BonsaiProver {}
 impl BonsaiProver {
     /// Generates a snark proof as a triplet (`Vec<u8>`, `FixedBytes<32>`,
     /// `Vec<u8>) for the given elf and input.
-    pub fn prove(elf: &[u8], input: &[u8]) -> Result<(Vec<u8>, FixedBytes<32>, Vec<u8>)> {
+    pub fn prove(elf: &[u8], input: &Z0Req) -> Result<(Vec<u8>, FixedBytes<32>, Vec<u8>)> {
         let client = bonsai_sdk::Client::from_env(risc0_zkvm::VERSION)?;
 
         // Compute the image_id, then upload the ELF with the image_id as its key.
         let image_id = compute_image_id(elf)?;
         let image_id_hex = image_id.to_string();
+
         client.upload_img(&image_id_hex, elf.to_vec())?;
-        log::info!("Image ID: 0x{}", image_id_hex);
+        println!("Image ID: 0x{}", image_id_hex);
 
         // Prepare input data and upload it.
-        let input_id = client.upload_input(input.to_vec())?;
+        let input_ser = serde_json::to_string(&input).unwrap();
+        println!("{}",input_ser.as_str());
+        let input_id = client.upload_input(input_ser.into_bytes())?;
+
+        println!("input id{}",input_id);
 
         // Start a session running the prover.
         let session = client.create_session(image_id_hex, input_id, vec![])?;
-        log::info!("Created session: {}", session.uuid);
+        println!("Created session: {}", session.uuid);
         let _receipt = loop {
             let res = session.status(&client)?;
             if res.status == "RUNNING" {
-                log::info!(
+                println!(
                     "Current status: {} - state: {} - continue polling...",
                     res.status,
                     res.state.unwrap_or_default()
@@ -122,12 +101,12 @@ impl BonsaiProver {
 
         // Fetch the snark.
         let snark_session = client.create_snark(session.uuid)?;
-        log::info!("Created snark session: {}", snark_session.uuid);
+        println!("Created snark session: {}", snark_session.uuid);
         let snark_receipt = loop {
             let res = snark_session.status(&client)?;
             match res.status.as_str() {
                 "RUNNING" => {
-                    log::info!("Current status: {} - continue polling...", res.status,);
+                    println!("Current status: {} - continue polling...", res.status,);
                     std::thread::sleep(Duration::from_secs(15));
                     continue;
                 }
