@@ -52,8 +52,10 @@ fn generate_output(req:Z0Req) -> Result<[u8; 32],Z0ValidationError>{
     });
 
     let mut multi_sig_state: Vec<u8> =Vec::new();
+    let pad = vec![0; 12];
 
     for (_, val) in signers.iter().enumerate() {
+        multi_sig_state.extend_from_slice(pad.as_slice());
         multi_sig_state.extend_from_slice(val.as_bytes());
     }
 
