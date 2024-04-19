@@ -189,6 +189,7 @@ dependencies = [
  "cargo-platform",
  "clap",
  "env_logger",
+ "ethereum-hexutil",
  "ethers",
  "ethers-core",
  "ethers-signers",
@@ -1302,6 +1303,12 @@ dependencies = [
  "scale-info",
  "tiny-keccak",
 ]
+
+[[package]]
+name = "ethereum-hexutil"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc096350537e7ec4f98252fc88a7912a8a23183e089b1f687516f0e9c82704ff"
 
 [[package]]
 name = "ethereum-types"

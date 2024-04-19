@@ -6,9 +6,10 @@ use risc0_zkvm::guest::env;
 use std::fmt;
 use std::str;
 use std::fmt::{Display, Formatter};
-use alloy_primitives::FixedBytes;
 use ethers_core::utils::hex::ToHexExt;
 use serde::{Serialize, Deserialize};
+use alloy_primitives::{FixedBytes};
+use alloy_sol_types::SolValue;
 use serde_json::json;
 
 #[derive(Debug)]
@@ -86,5 +87,5 @@ fn main() {
     });
     let req: Z0Req = serde_json::from_slice(input.to_string().as_bytes()).unwrap();
     let result = generate_output(req).unwrap();
-    env::commit(&result.encode_hex());
+    env::commit_slice(&<FixedBytes<32>>::from_slice(result.as_slice()).abi_encode());
 }
