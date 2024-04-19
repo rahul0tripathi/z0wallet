@@ -40,11 +40,10 @@ contract EvenNumber {
     }
 
     /// @notice Set the even number stored on the contract. Requires a RISC Zero proof that the number is even.
-    function set(uint256 x, bytes32 postStateDigest, bytes calldata seal) public {
+    function validate(bytes32 postStateDigest, bytes calldata seal) public {
         // Construct the expected journal data. Verify will fail if journal does not match.
-        bytes memory journal = abi.encode(x);
+        bytes memory journal = hex"1e945bf893be35b325c6c361386d3c5aed9e79d6d8d0123f5c4d0b8b326045cf";
         require(verifier.verify(seal, imageId, postStateDigest, sha256(journal)));
-        number = x;
     }
 
     /// @notice Returns the number stored.
