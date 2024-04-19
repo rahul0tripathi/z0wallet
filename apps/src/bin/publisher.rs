@@ -16,12 +16,20 @@
 // to the Bonsai proving service and publish the received proofs directly
 // to your deployed app contract.
 
-use alloy_primitives::U256;
 use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
-use apps::{BonsaiProver, TxSender};
-use clap::Parser;
+use apps::{BonsaiProver, EOASignature, Z0Req};
 use methods::IS_EVEN_ELF;
+
+use std::str::FromStr;
+use futures ;
+use ethers_core::{types::{Signature, H160, U256}, utils::{keccak256}};
+use ethers_core::abi::{AbiEncode, encode, FixedBytes, Token};
+use ethers_core::types::Address;
+
+use ethers_signers::{LocalWallet, Signer, WalletError};
+use futures::executor::block_on;
+use serde::{Deserialize, Serialize};
 
 // `IEvenNumber` interface automatically generated via the alloy `sol!` macro.
 sol! {
@@ -30,65 +38,35 @@ sol! {
     }
 }
 
-/// Arguments of the publisher CLI.
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Ethereum chain ID
-    #[clap(long)]
-    chain_id: u64,
 
-    /// Ethereum Node endpoint.
-    #[clap(long, env)]
-    eth_wallet_private_key: String,
+async fn gen_test_input()  -> Z0Req {
+    let message_hash = keccak256("hello".as_bytes());
+    let wallet: LocalWallet = "dcf2cbdd171a21c480aa7f53d77f31bb102282b3ff099c78e3118b37348c72f7"
+        .parse::<LocalWallet>()
+        .unwrap();
+    let signature = wallet.sign_message(message_hash.encode_hex()).await.unwrap();
 
-    /// Ethereum Node endpoint.
-    #[clap(long)]
-    rpc_url: String,
-
-    /// Application's contract address on Ethereum
-    #[clap(long)]
-    contract: String,
-
-    /// The input to provide to the guest binary
-    #[clap(short, long)]
-    input: U256,
+    return Z0Req{
+        signers: vec![H160::from_str("0x63f9725f107358c9115bc9d86c72dd5823e9b1e6").unwrap() as Address, H160::from_str("0x687f4304Df62449dBc6C95FE9A8cb1153d40D42e").unwrap() as Address, H160::from_str("0x0f8361eF429B43fA48aC66A7cD8F619C517274f1").unwrap() as Address],
+        threshold: 1,
+        message_hash,
+        signatures: vec![EOASignature{
+            eoa: wallet.address(),
+            signature: signature.to_string(),
+        }],
+    }
 }
 
 fn main() -> Result<()> {
     env_logger::init();
-    let args = Args::parse();
 
-    // Create a new `TxSender`.
-    let tx_sender = TxSender::new(
-        args.chain_id,
-        &args.rpc_url,
-        &args.eth_wallet_private_key,
-        &args.contract,
-    )?;
-
-    // ABI encode the input for the guest binary, to match what the `is_even` guest
-    // code expects.
-    let input = args.input.abi_encode();
-
+    let input  = block_on(gen_test_input());
     // Send an off-chain proof request to the Bonsai proving service.
     let (journal, post_state_digest, seal) = BonsaiProver::prove(IS_EVEN_ELF, &input)?;
 
+    println!("journal {} post state digest {} seal {}",journal.encode_hex(),post_state_digest.encode_hex(),seal.encode_hex());
     // Decode the journal. Must match what was written in the guest with
     // `env::commit_slice`.
-    let x = U256::abi_decode(&journal, true).context("decoding journal data")?;
-
-    // Encode the function call for `IEvenNumber.set(x)`.
-    let calldata = IEvenNumber::IEvenNumberCalls::set(IEvenNumber::setCall {
-        x,
-        post_state_digest,
-        seal,
-    })
-    .abi_encode();
-
-    // Send the calldata to Ethereum.
-    let runtime = tokio::runtime::Runtime::new()?;
-    runtime.block_on(tx_sender.send(calldata))?;
 
     Ok(())
 }
