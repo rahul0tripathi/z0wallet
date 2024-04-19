@@ -14,14 +14,17 @@ lto = "thin"
 [dependencies]
 risc0-zkvm = {  version = "0.21", default-features = false, features = ['std'] }
 hex-literal = "0.4"
-k256 = { version = "=0.13.1", features = ["arithmetic", "serde", "expose-field", "std", "ecdsa"], default_features = false }
+ethers-signers = "2.0.14"
+ethers-core = "2.0.14"
+cargo-platform = "=0.1.5"
+bumpalo = "=3.14.0"
 alloy-primitives = { version = "0.6", default-features = false, features = ["rlp", "serde", "std"] }
 alloy-sol-types = { version = "0.6" }
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
 
 [patch.crates-io]
 # Placing these patch statement in the workspace Cargo.toml will add RISC Zero SHA-256 and bigint
 # multiplication accelerator support for all downstream usages of the following crates.
-sha2 = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.6-risczero.0" }
-k256 = { git = "https://github.com/risc0/RustCrypto-elliptic-curves", tag = "k256/v0.13.1-risczero.1"  }
 crypto-bigint = { git = "https://github.com/risc0/RustCrypto-crypto-bigint", tag = "v0.5.2-risczero.0" }
 
