@@ -1,19 +1,19 @@
 use std::cmp::Ordering;
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::io::Read;
 use std::str;
 use std::str::FromStr;
 
 use alloy_primitives::FixedBytes;
 use alloy_sol_types::SolValue;
 use ethers_core::{types::{Signature, U256}, utils::keccak256};
-use ethers_core::abi::{AbiEncode, encode, Token};
+use ethers_core::abi::AbiEncode;
 use ethers_core::types::Address;
 use ethers_core::utils::hex::ToHexExt;
 use hexutil::read_hex;
 use risc0_zkvm::guest::env;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 #[derive(Debug)]
 pub enum Z0ValidationError {
@@ -100,11 +100,9 @@ fn generate_output(req:Z0Req) -> Result<[u8; 32],Z0ValidationError>{
 
 
 fn main() {
-    // let raw: &mut [u8] = &mut [];
-    // env::read_slice(raw);
-    // println!("{}",str::from_utf8(raw).unwrap());
-    let input = json!({"signers":["0x63f9725f107358c9115bc9d86c72dd5823e9b1e6","0x687f4304df62449dbc6c95fe9a8cb1153d40d42e","0x0f8361ef429b43fa48ac66a7cd8f619c517274f1"],"threshold":"0x0000000000000000000000000000000000000000000000000000000000000001","nonce":"0x0000000000000000000000000000000000000000000000000000000000000000","message_hash":"0x8649d736c2af537facc35382d7e0d8503ed5f036fa5201a9186da1d4db189640","signatures":[{"eoa":"0x63f9725f107358c9115bc9d86c72dd5823e9b1e6","signature":"0xa3cff1be8ac5c3be80aac53829bfb949687b1e55d9abd4f9a7bf72dcfb242e20174f2240557f78bbc4c5d9b9f85648cfdd7e3687af0a61d09a8eb5d8d9772ab21b"}]});
-    let req: Z0Req = serde_json::from_slice(input.to_string().as_bytes()).unwrap();
+    let mut input_bytes = Vec::<u8>::new();
+    env::stdin().read_to_end(&mut input_bytes).unwrap();
+    let req: Z0Req = serde_json::from_slice(str::from_utf8(&*input_bytes).unwrap().as_ref()).unwrap();
     let result = generate_output(req).unwrap();
     env::commit_slice(&<FixedBytes<32>>::from_slice(result.as_slice()).abi_encode());
 }

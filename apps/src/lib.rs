@@ -63,7 +63,9 @@ impl BonsaiProver {
         // Prepare input data and upload it.
         let input_ser = serde_json::to_string(&input).unwrap();
         println!("{}",input_ser.as_str());
-        let input_id = client.upload_input(input_ser.into_bytes())?;
+        // Prepare input data and upload it.
+        let input_data = bytemuck::cast_slice(input_ser.as_bytes()).to_vec();
+        let input_id = client.upload_input(input_data)?;
 
         println!("input id{}",input_id);
 

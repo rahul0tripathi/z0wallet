@@ -3,13 +3,13 @@ extern crate core;
 use std::str::FromStr;
 
 use anyhow::Result;
-use ethers_core::{types::{H160, U256}, utils::keccak256};
 use ethers_core::abi::AbiEncode;
+use ethers_core::types::{H160, U256};
 use ethers_core::types::Address;
 use ethers_signers::{LocalWallet, Signer};
 use futures;
 use futures::executor::block_on;
-use hexutil::{to_hex, read_hex};
+use hexutil::{read_hex, to_hex};
 
 use apps::{BonsaiProver, EOASignature, Z0Req};
 use methods::Z0_GENERATOR_ELF;
