@@ -3,13 +3,9 @@
 pragma solidity ^0.8.20;
 
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
-import {ImageID} from "./ImageID.sol"; // auto-generated contract after running `cargo build`.
 
-struct Call {
-    address target;
-    uint256 value;
-    bytes data;
-}
+import {LibZ0, Call} from "./LibZ0.sol";
+import {ImageID} from "./ImageID.sol"; // auto-generated contract after running `cargo build`.
 
 /// @title A starter application using RISC Zero.
 /// @notice This basic application holds a number, guaranteed to be even.
@@ -38,6 +34,7 @@ contract Z0Wallet {
         bytes calldata seal
     ) public {
         bytes memory executeJournal = abi.encodePacked(journal(input));
+        // Construct the expected journal data. Verify will fail if journal does not match.
         require(
             verifier.verify(
                 seal,
@@ -47,17 +44,13 @@ contract Z0Wallet {
             ),
             "Z001"
         );
-        // Construct the expected journal data. Verify will fail if journal does not match.
+
         (bool success, bytes memory data) = input.target.call{
             value: input.value
         }(input.data);
         require(success, "Z002");
-        emit Executed(messageHash(input), nonce, data);
+        emit Executed(LibZ0.messageHash(input), nonce, data);
         nonce += 1;
-    }
-
-    function messageHash(Call calldata input) public pure returns (bytes32) {
-        return keccak256(abi.encode(input.target, input.value, input.data));
     }
 
     function stateRoot() public view returns (bytes32) {
@@ -65,6 +58,6 @@ contract Z0Wallet {
     }
 
     function journal(Call calldata input) public view returns (bytes32) {
-        return keccak256(abi.encode(stateRoot(), messageHash(input)));
+        return keccak256(abi.encode(LibZ0.messageHash(input), stateRoot()));
     }
 }
