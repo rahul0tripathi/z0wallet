@@ -1,8 +1,15 @@
 extern crate core;
 
+use std::io::Read;
+use std::net::TcpStream;
 use std::str::FromStr;
 
 use anyhow::Result;
+use axum::{
+    http::StatusCode,
+    Json,
+    Router, routing::{get, post},
+};
 use ethers_core::abi::AbiEncode;
 use ethers_core::types::{H160, U256};
 use ethers_core::types::Address;
@@ -10,8 +17,9 @@ use ethers_signers::{LocalWallet, Signer};
 use futures;
 use futures::executor::block_on;
 use hexutil::{read_hex, to_hex};
+use serde::{Deserialize, Serialize};
 
-use apps::{BonsaiProver, EOASignature, Z0Req};
+use apps::{BonsaiProver, EOASignature, ExecuteCall, Z0Req};
 use methods::Z0_GENERATOR_ELF;
 
 async fn gen_test_input() -> Z0Req {
@@ -34,15 +42,72 @@ async fn gen_test_input() -> Z0Req {
     };
 }
 
-fn main() -> Result<()> {
-    env_logger::init();
+fn read_body(mut stream: &TcpStream) {
+    let mut buf = [0u8; 4096];
+    match stream.read(&mut buf) {
+        Ok(_) => {
+            let req_str = String::from_utf8_lossy(&buf);
+            println!("{}", req_str);
+        }
+        Err(e) => println!("Unable to read stream: {}", e),
+    }
+}
 
-    let input = block_on(gen_test_input());
-    // Send an off-chain proof request to the Bonsai proving service.
-    let (journal, post_state_digest, seal) = BonsaiProver::prove(Z0_GENERATOR_ELF, &input)?;
+#[derive(Deserialize)]
+struct GenerateProofRequest {
+    wallet: Address,
+    data: Z0Req,
+    execute_call: ExecuteCall,
+}
+
+#[derive(Serialize)]
+struct GenerateProofResponse {
+    to: Address,
+    post_state_digest: String,
+    seal: String,
+    error: String,
+}
+
+// basic handler that responds with a static string
+async fn root() -> &'static str {
+    "OK"
+}
+
+
+async fn generate_proof(
+    Json(payload): Json<GenerateProofRequest>,
+) -> (StatusCode, Json<GenerateProofResponse>) {
+    let (journal, post_state_digest, seal) = BonsaiProver::mock(Z0_GENERATOR_ELF, payload.data).unwrap();
     let digest = post_state_digest.as_slice();
-
-
     println!("journal {} post state digest {} seal {}", to_hex(&*journal), to_hex(digest), to_hex(&*seal));
+
+    let response = GenerateProofResponse {
+        to: payload.wallet,
+        post_state_digest: to_hex(digest),
+        seal: to_hex(&*seal),
+        error: "".to_string(),
+    };
+
+    (StatusCode::OK, Json(response))
+}
+
+async fn generate_test_input() -> (StatusCode, Json<Z0Req>) {
+    let output = block_on(gen_test_input());
+
+    return (StatusCode::OK, Json(output));
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
+    let app = Router::new()
+        .route("/", get(root))
+        .route("/generate", post(generate_proof))
+        .route("/mock", get(generate_test_input));
+
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
     Ok(())
 }
